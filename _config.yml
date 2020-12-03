@@ -3,7 +3,7 @@
 ## Source: https://github.com/hexojs/hexo/
 
 # Site
-title: INURL Blog
+title: raylax'Blog
 subtitle:
 description:
 keywords:
@@ -13,9 +13,9 @@ timezone: Asia/Shanghai
 
 # URL
 ## If your site is put in a subdirectory, set url as 'http://yoursite.com/child' and root as '/child/'
-url: http://b.inurl.org
+url: https//raylax.github.io
 root: /
-permalink: post/:title
+permalink: post/:title.html
 permalink_defaults:
 
 # Directory
