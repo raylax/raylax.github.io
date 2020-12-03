@@ -38,7 +38,7 @@ brand: /img/brand.jpg
 favicon: /img/favicon.ico
 
 # email
-email: 你只见树，未见森林
+email: 远在远方的风比远方更远
 
 # 设置 Android L Chrome 浏览器状态栏颜色
 color: '#3F51B5'
@@ -81,7 +81,7 @@ postMessage: false
 cnzz: false
 
 # 百度统计，如要开启，改为你的 key
-baidu_tongji: false
+baidu_tongji: 4fdf71ff2509b3ab00c3edb04fa35062
 
 # 腾讯分析，如要开启，输入站点id
 tajs: false
