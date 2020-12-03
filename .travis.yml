@@ -12,7 +12,7 @@ deploy:
   provider: pages
   skip-cleanup: true
   github-token: $GH_TOKEN
-  keep-history: tru：q
+  keep-history: true
   on:
     branch: master
   local-dir: public
