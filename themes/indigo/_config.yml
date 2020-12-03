@@ -9,15 +9,15 @@
 #    target: _blank    是否跳出，省略则在当前页面打开
 menu:
   home:
-    text: Index
-    url: /index.html
+    text: Home
+    url: /
   archives:
-    url: /archives/index.html
+    url: /archives
   tags:
-    url: /tags/index.html
+    url: /tags
   th-list:
     text: Categories
-    url: /categories/index.html
+    url: /categories
   address-card:
     text: About
     url: https://www.inurl.org
