@@ -86,10 +86,14 @@ protected final boolean tryAcquire(int acquires) {
 ```java
 // 判断队列中是否有正在等待的
 public final boolean hasQueuedPredecessors() {
-    Node t = tail; // 第一次入对可能出现head初始化了但是tail没初始化，所以反向获取
+	// 根据enq方法可知，如果head和tail二者只有一个为null只有可能是head不为null，tail为null
+    Node t = tail;
     Node h = head;
     Node s;
-    return h != t && 
+    // h == t
+    // h == t == null   未初始化过
+    // h == t != null   对列中只有一个等待者
+    return h != t &&
         ((s = h.next) == null || s.thread != Thread.currentThread());
 }
 ```
@@ -122,6 +126,7 @@ private Node enq(final Node node) {
         Node t = tail;
         if (t == null) { // 初始化
             if (compareAndSetHead(new Node()))
+            	// 如果此时发生并发则head不为null，tail为null
                 tail = head;
         } else {
             node.prev = t;
