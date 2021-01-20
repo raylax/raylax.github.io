@@ -1,5 +1,5 @@
 ---
-title: Java并发之AbstractQueuedSynchronizer
+title: Java并发之AQS相关代码分析-ReentrantLock
 date: 2021-01-12 14:17:28
 tags:
 	- java
@@ -295,5 +295,38 @@ protected final boolean tryRelease(int releases) {
     // 设置新的state
     setState(c);
     return free;
+}
+```
+
+## 非公平模式
+
+> 上面讲了公平模式`ReentrantLock`也可以设置为非公平模式，主要区别在获取时并不判断当前线程是否是等待队列头
+
+```java
+final boolean nonfairTryAcquire(int acquires) {
+    // 当前线程
+    final Thread current = Thread.currentThread();
+    // 当前状态
+    int c = getState();
+    // 如果未锁定状态
+    if (c == 0) {
+        // CAS设置状态
+        if (compareAndSetState(0, acquires)) {
+            // 设置独占线程
+            setExclusiveOwnerThread(current);
+            return true;
+        }
+    }
+    // 如果独占线程是当前线程，增加状态
+    else if (current == getExclusiveOwnerThread()) {
+        int nextc = c + acquires;
+        // 判断溢出
+        if (nextc < 0) // overflow
+            throw new Error("Maximum lock count exceeded");
+        // 设置状态
+        setState(nextc);
+        return true;
+    }
+    return false;
 }
 ```
