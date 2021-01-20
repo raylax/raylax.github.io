@@ -19,7 +19,7 @@ AQS类是了一个实现了阻塞锁的抽象队列同步器，是`ReentrantLock
 
 ```java
 // 共享资源
-private volatile int state
+private volatile int state;
 // 获取状态
 protected final int getState();
 // 设置状态
@@ -148,9 +148,9 @@ final boolean acquireQueued(final Node node, int arg) {
     	// 是否中断
         boolean interrupted = false;
         for (;;) {
-        	// 获取前置节点
+        	// 获取前驱节点
             final Node p = node.predecessor();
-            // 如果前置节点是头节点则尝试获取
+            // 如果前驱节点是头节点则尝试获取
             if (p == head && tryAcquire(arg)) {
             	// 如果获取成功则将当前节点设置成头节点
                 setHead(node);
@@ -174,18 +174,18 @@ final boolean acquireQueued(final Node node, int arg) {
 #### shouldParkAfterFailedAcquire
 ```java
 private static boolean shouldParkAfterFailedAcquire(Node pred, Node node) {
-	// 前置节点状态 0初始状态 小于0表示节点有效 大于0表示已取消
+	// 前驱节点状态 0初始状态 小于0表示节点有效 大于0表示已取消
     int ws = pred.waitStatus;
     // 如果waitStatus已经设置好了直接返回
     if (ws == Node.SIGNAL)
         return true;
-    // 如果前置节状态无效
+    // 如果前驱节状态无效
     if (ws > 0) {
     	// 依次向前查找有效节点
         do {
             node.prev = pred = pred.prev;
         } while (pred.waitStatus > 0);
-        // 设置前置节点
+        // 设置前驱节点
         pred.next = node;
     } else {
     	// 设置waitStatus信号量
@@ -202,33 +202,33 @@ private void cancelAcquire(Node node) {
         return;
     // 清除线程
     node.thread = null;
-    // 前置节点
+    // 前驱节点
     Node pred = node.prev;
     // 循环向前寻找有效节点
     while (pred.waitStatus > 0)
         node.prev = pred = pred.prev;
-    // 前置节点的下一个节点
+    // 前驱节点的下一个节点
     Node predNext = pred.next;
     // 设置节点为无效状态
     node.waitStatus = Node.CANCELLED;
     // 如果当前节点是尾节点，则直接设置尾节点为当前节点前第一个有效节点
     if (node == tail && compareAndSetTail(node, pred)) {
-    	// 设置前置节点的next为null
+    	// 设置前驱节点的next为null
         compareAndSetNext(pred, predNext, null);
     } else {
         int ws;
-        // 前置节点不是头节点
+        // 前驱节点不是头节点
         if (pred != head &&
-        	// 如果前置节点等于SIGNAL或者可以设置为SIGNAL，并且前置节点的线程不是null
+        	// 如果前驱节点等于SIGNAL或者可以设置为SIGNAL，并且前驱节点的线程不是null
             ((ws = pred.waitStatus) == Node.SIGNAL ||
              (ws <= 0 && compareAndSetWaitStatus(pred, ws, Node.SIGNAL))) &&
             pred.thread != null) {
-        	// 将当前节点的后置节点设置为前置节点的后置节点
+        	// 将当前节点的后驱节点设置为前驱节点的后驱节点
             Node next = node.next;
             if (next != null && next.waitStatus <= 0)
                 compareAndSetNext(pred, predNext, next);
         } else {
-        	// 如果前置节点是头节点则唤醒后置节点
+        	// 如果前驱节点是头节点则唤醒后驱节点
             unparkSuccessor(node);
         }
 
@@ -238,16 +238,16 @@ private void cancelAcquire(Node node) {
 ```
 ##### unparkSuccessor
 ```java
-// 唤醒节点的后置节点
+// 唤醒节点的后驱节点
 private void unparkSuccessor(Node node) {
     int ws = node.waitStatus;
     // 如果是正常状态则设置为初始状态
     if (ws < 0)
         compareAndSetWaitStatus(node, ws, 0);
 
-    // 取后置节点
+    // 取后驱节点
     Node s = node.next;
-    // 如果后置节点不是null并且后置节点状态无效
+    // 如果后驱节点不是null并且后驱节点状态无效
     if (s == null || s.waitStatus > 0) {
         s = null;
         // 从尾部向前遍历有效节点
@@ -271,7 +271,7 @@ public final boolean release(int arg) {
         Node h = head;
         // 如果释放成功并且waitStatus不是初始状态
         if (h != null && h.waitStatus != 0)
-        	// 唤醒后置及节点
+        	// 唤醒后驱及节点
             unparkSuccessor(h);
         return true;
     }
