@@ -209,4 +209,4 @@ private boolean doAcquireSharedNanos(int arg, long nanosTimeout) throws Interrup
 ```
 
 
-> 以上所有未详细解释方法在ReentrantLock已经讲过
+> 以上所有未详细解释方法在ReentrantLock一章已经讲过
