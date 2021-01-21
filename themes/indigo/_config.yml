@@ -59,7 +59,7 @@ archive_yearly: true
 show_last_updated: false
 
 # 是否开启分享
-share: true
+share: false
 
 # 是否开启打赏，关闭 reward: false
 reward: false
