@@ -50,7 +50,7 @@ function ContentMenu(parent) {
         for (let { name, handler } of this.menus) {
             let menu = document.createElement('li');
             menu.addEventListener('click', () => {
-                remove()
+                removeWrapper()
                 handler.call(this.menus)
             }, false)
             menu.innerText = name
