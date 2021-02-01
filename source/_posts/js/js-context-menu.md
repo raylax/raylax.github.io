@@ -36,11 +36,11 @@ function ContentMenu(parent) {
             handler,
         })
     }
-    const remove = () => {
+    const removeWrapper = () => {
         if (this.wrapper) {
             document.body.removeChild(this.wrapper)
+            this.wrapper = null
         }
-        this.wrapper = null
     }
     const createWrapper = () => {
         const wrapper = document.createElement('ul')
@@ -51,7 +51,7 @@ function ContentMenu(parent) {
             let menu = document.createElement('li');
             menu.addEventListener('click', () => {
                 remove()
-                handler.call(menus)
+                handler.call(this.menus)
             }, false)
             menu.innerText = name
             wrapper.appendChild(menu)
@@ -67,7 +67,7 @@ function ContentMenu(parent) {
         wrapper.style.left = clientX + 'px'
         wrapper.style.top = clientY + 'px'
         // 删除原有元素
-        remove()
+        removeWrapper()
         // 添加到body
         document.body.appendChild(wrapper)
         this.wrapper = wrapper
@@ -79,6 +79,7 @@ function ContentMenu(parent) {
         if (offsetY + wrapper.offsetHeight > parent.offsetHeight) {
             wrapper.style.top = (clientY - wrapper.offsetHeight) + 'px'
         }
+
         // 因为wrapper的offsetHeight只有在渲染过才能取到，所以在创建时设置成透明
         // 待所有属性都计算完成再显示
         wrapper.style.opacity = '1'
@@ -88,19 +89,21 @@ function ContentMenu(parent) {
     }
 }
 const cm = new ContentMenu(document.getElementById('xxx'))
-cm.add('Create', () => console.log('create'))
-cm.add('Update', () => console.log('update'))
-cm.add('Delete', () => console.log('delete'))
-
+cm.add('create', () => alert('create'))
+cm.add('update', () => alert('update'))
+cm.add('delete', () => alert('delete'))
 ```
 
 ## CSS
 ```css
 #xxx {
     padding: 40px 30px 20px 10px;
-    margin: 10px 20px 30px 40px;
-    height: 600px;
+    width: 600px;
+    height: 400px;
     border: 1px solid #f00;
+    position: fixed;
+    left: 200px;
+    top: 100px;
 }
 .cm-wrapper {
     list-style: none;
