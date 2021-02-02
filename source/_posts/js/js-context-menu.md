@@ -75,11 +75,10 @@ function ContentMenu(parent) {
         if (offsetX + wrapper.offsetWidth > parent.offsetWidth) {
             wrapper.style.left = (clientX - wrapper.offsetWidth) + 'px'
         }
-        // 处理左边界，如果元素内Y偏移+本身context高度大于元素本身高度
+        // 处理下边界，如果元素内Y偏移+本身context高度大于元素本身高度
         if (offsetY + wrapper.offsetHeight > parent.offsetHeight) {
             wrapper.style.top = (clientY - wrapper.offsetHeight) + 'px'
         }
-
         // 因为wrapper的offsetHeight只有在渲染过才能取到，所以在创建时设置成透明
         // 待所有属性都计算完成再显示
         wrapper.style.opacity = '1'
