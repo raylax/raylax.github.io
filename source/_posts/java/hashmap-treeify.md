@@ -126,61 +126,81 @@ static final class TreeNode<K,V> extends LinkedHashMap.Entry<K,V> {
 
     // 树化
     final void treeify(Node<K,V>[] tab) {
-        TreeNode<K,V> root = null; // 根节点
+    	// 根节点
+        TreeNode<K,V> root = null; 
+        // 遍历链表，x指向当前节点，next指向下一个节点
         for (TreeNode<K,V> x = this, next; x != null; x = next) {
             next = (TreeNode<K,V>)x.next;
             x.left = x.right = null;
-            if (root == null) {
-                x.parent = null;
-                x.red = false;
-                root = x;
+            if (root == null) { // 如果还没有根节点
+                x.parent = null; // 设置父节点为空
+                x.red = false; // 设置为黑色
+                root = x; // 将当前节点设置为根节点
             }
             else {
-                K k = x.key;
-                int h = x.hash;
-                Class<?> kc = null;
-                for (TreeNode<K,V> p = root;;) {
-                    int dir, ph;
-                    K pk = p.key;
+                K k = x.key; // 当前节点的key
+                int h = x.hash; // 当前节点的hash
+                Class<?> kc = null; // 当前key的class
+                for (TreeNode<K,V> p = root;;) { // 从根节点遍历
+                    int dir; // 方向
+                    int ph; // p hash
+                    K pk = p.key; // p key
+                    // 如果p hash大于当前节点的hash设置dir为-1表示向左插入
                     if ((ph = p.hash) > h)
                         dir = -1;
+                    // 如果p hash小于当前节点的hash设置dir为1表示向右插入
                     else if (ph < h)
                         dir = 1;
+                    // 如果相等，使用comparable接口比较
                     else if ((kc == null &&
                               (kc = comparableClassFor(k)) == null) ||
                              (dir = compareComparables(kc, k, pk)) == 0)
+                    	// 如果comparable接口比较还是相等
                         dir = tieBreakOrder(k, pk);
-
+                    // 保存p节点
                     TreeNode<K,V> xp = p;
+                    // 如果dir小于0一定放入当前节点的左侧
+                    // 如果dir大于0一定放入当前节点的右侧
+                    // 如果要插入的左侧节点为null或者要插入的右侧节点为null，执行插入逻辑
+                    // 否则将p设置为left或者right进行下一次循环
                     if ((p = (dir <= 0) ? p.left : p.right) == null) {
+                    	// 当前节点的父节点设置为p
                         x.parent = xp;
+                        // 如果小于0，设置为左子节点
                         if (dir <= 0)
                             xp.left = x;
+                        // 如果大于0，设置为右子节点
                         else
                             xp.right = x;
+                        // 执行红黑树平衡插入并且重新设置root
                         root = balanceInsertion(root, x);
                         break;
                     }
                 }
             }
         }
+        // 将root节点设置到table
         moveRootToFront(tab, root);
     }
 
-    /**
-     * Returns a list of non-TreeNodes replacing those linked from
-     * this node.
-     */
+    // 取消树化
     final Node<K,V> untreeify(HashMap<K,V> map) {
-        Node<K,V> hd = null, tl = null;
+        Node<K,V> hd = null; // 链表头
+        Node<K,V> tl = null; // 链表尾
+        // 遍历链表
         for (Node<K,V> q = this; q != null; q = q.next) {
+        	// 将treenode转换成普通node
             Node<K,V> p = map.replacementNode(q, null);
+            // 如果链表尾没初始化将头设置为当前节点
             if (tl == null)
                 hd = p;
+            // 如果已经初始化将当前节点拼接到链表尾
             else
                 tl.next = p;
+            // 将链表尾设置为当前节点
             tl = p;
         }
+        // 返回链表头
         return hd;
     }
 
