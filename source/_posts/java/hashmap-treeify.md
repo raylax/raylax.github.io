@@ -205,161 +205,255 @@ static final class TreeNode<K,V> extends LinkedHashMap.Entry<K,V> {
     }
 
     /**
-     * Tree version of putVal.
+     *  map   = hashmap对象
+     *  table = table
+     *  h     = hash值
+     *  k     = key
+     *  v     = value
      */
     final TreeNode<K,V> putTreeVal(HashMap<K,V> map, Node<K,V>[] tab,
                                    int h, K k, V v) {
+        // key class
         Class<?> kc = null;
+        // 是否搜索过一次
         boolean searched = false;
+        // 获取根节点
         TreeNode<K,V> root = (parent != null) ? root() : this;
+        // 遍历红黑树
         for (TreeNode<K,V> p = root;;) {
-            int dir, ph; K pk;
+            int ph; // hash值
+            int dir; // 方向
+            K pk; // key
+            // 如果当前节点hash值大于key的hash值向左查找
             if ((ph = p.hash) > h)
                 dir = -1;
+            // 如果当前节点hash值小于key的hash值向有查找
             else if (ph < h)
                 dir = 1;
+            // 如果hash值相等并且key相等，返回当前节点
             else if ((pk = p.key) == k || (k != null && k.equals(pk)))
                 return p;
+            // 如果hash值相等但是key不相等
             else if ((kc == null &&
                       (kc = comparableClassFor(k)) == null) ||
                      (dir = compareComparables(kc, k, pk)) == 0) {
+                // 如果没有搜索过则向左右搜索
                 if (!searched) {
                     TreeNode<K,V> q, ch;
                     searched = true;
+                    // 分别向左右查找
                     if (((ch = p.left) != null &&
                          (q = ch.find(h, k, kc)) != null) ||
                         ((ch = p.right) != null &&
                          (q = ch.find(h, k, kc)) != null))
+                        // 如果找到直接返回
                         return q;
                 }
+                // 判断方向
                 dir = tieBreakOrder(k, pk);
             }
 
-                TreeNode<K,V> xp = p;
-                if ((p = (dir <= 0) ? p.left : p.right) == null) {
-                    Node<K,V> xpn = xp.next;
-                    TreeNode<K,V> x = map.newTreeNode(h, k, v, xpn);
-                    if (dir <= 0)
-                        xp.left = x;
-                    else
-                        xp.right = x;
-                    xp.next = x;
-                    x.parent = x.prev = xp;
-                    if (xpn != null)
-                        ((TreeNode<K,V>)xpn).prev = x;
-                    moveRootToFront(tab, balanceInsertion(root, x));
-                    return null;
-                }
+            TreeNode<K,V> xp = p; // 保存当前节点
+            // 如果dir所指的方向为null，说明需要创建新节点
+            if ((p = (dir <= 0) ? p.left : p.right) == null) {
+                Node<K,V> xpn = xp.next; // 保存当前节点的后继节点
+                // 创建一个新节点将当前节点的后继节点设置为新节点的后继节点
+                TreeNode<K,V> x = map.newTreeNode(h, k, v, xpn);
+                // 如果向左插入将当前节点的左节点设置为新节点
+                if (dir <= 0)
+                    xp.left = x;
+                // 如果向右插入将当前节点的有节点设置为新节点
+                else
+                    xp.right = x;
+                // 将当前节点后继节点设置为新节点
+                xp.next = x;
+                // 将新节点的父节点和前置节点设置为当前节点
+                x.parent = x.prev = xp;
+                // 如果当前节点的后继节点不是null将当前节点的前置节点拼接到新节点
+                if (xpn != null)
+                    ((TreeNode<K,V>)xpn).prev = x;
+                // 插入红黑树
+                moveRootToFront(tab, balanceInsertion(root, x));
+                return null;
             }
         }
+    }
 
+    
+    final void removeTreeNode(HashMap<K,V> map, Node<K,V>[] tab,
+                              boolean movable) {
+        int n; // table长度
+        // 如果table为空直接返回
+        if (tab == null || (n = tab.length) == 0)
+            return;
+        // 根据hash值计算index
+        int index = (n - 1) & hash;
+        // 头节点
+        TreeNode<K,V> first = (TreeNode<K,V>)tab[index];
+        // 根节点
+        TreeNode<K,V> root = first;
+        // 左子节点
+        TreeNode<K,V> rl;
+        // 当前节点的后驱节点
+        TreeNode<K,V> succ = (TreeNode<K,V>)next;
+        // 当前节点的前驱结点
+        TreeNode<K,V> pred = prev;
+
+        // 维护双向链表
+        // 如果前驱节点为空说明是头节点，将头节点设置为当前节点的后驱节点
+        if (pred == null)
+            tab[index] = first = succ;
+        // 前驱节点不为空，将前驱节点的后驱节点设置为当前节点的后驱节点
+        else
+            pred.next = succ;
+
+        // 如果后驱节点不为空，将后驱节点的前驱节点设置为当前节点的前驱节点
+        if (succ != null)
+            succ.prev = pred;
+
+        // 如果头节点为空直接返回
+        if (first == null)
+            return;
+
+        // 如果root不是根节点，重新获取根节点
+        if (root.parent != null)
+            root = root.root();
         /**
-         * Removes the given node, that must be present before this call.
-         * This is messier than typical red-black deletion code because we
-         * cannot swap the contents of an interior node with a leaf
-         * successor that is pinned by "next" pointers that are accessible
-         * independently during traversal. So instead we swap the tree
-         * linkages. If the current tree appears to have too few nodes,
-         * the bin is converted back to a plain bin. (The test triggers
-         * somewhere between 2 and 6 nodes, depending on tree structure).
-         */
-        final void removeTreeNode(HashMap<K,V> map, Node<K,V>[] tab,
-                                  boolean movable) {
-            int n;
-            if (tab == null || (n = tab.length) == 0)
-                return;
-            int index = (n - 1) & hash;
-            TreeNode<K,V> first = (TreeNode<K,V>)tab[index], root = first, rl;
-            TreeNode<K,V> succ = (TreeNode<K,V>)next, pred = prev;
-            if (pred == null)
-                tab[index] = first = succ;
+         * 当以下三个条件任一满足时，当满足红黑树条件时，说明该位置元素的长度少于6（UNTREEIFY_THRESHOLD），需要对该位置元素链表化
+         * 1. root == null 根节点为空，树节点数量为0
+         * 2. root.right == null 右孩子为空，树节点数量最多为2
+                 +----+                                                                                             
+                 | 1  |                                                                                             
+                 +----+                                                                                             
+                   /\                                                                                               
+                  /  \                                                                                              
+            +-----    -----+                                                                                        
+            | 2  |    |NULL|                                                                                        
+            +----+    +----+
+         * 3. (rl = root.left) == null || rl.left == null)
+         *    (rl = root.left) == null：左孩子为空，树节点数最多为2
+                 +----+                                                                                             
+                 | 1  |                                                                                             
+                 +----+                                                                                             
+                   /\                                                                                               
+                  /  \                                                                                              
+            +-----    -----+                                                                                        
+            |NULL|    |2   |                                                                                        
+            +----+    +----+ 
+         *    rl.left == null：左孩子的左孩子为NULL，树节点数最多为6
+                       +----+                                                                                                  
+                       | 1  |                                                                                                  
+                       +----+                                                                                                  
+                        /--\                                                                                                   
+                      /-    -\                                                                                                 
+               +----+          +----+                                                                                          
+               |2   |          |3   |                                                                                          
+               +----+          +----+                                                                                          
+                 /\              /\                                                                                            
+                /  \            /  \                                                                                           
+          +----+    +----++----+    +----+                                                                                     
+          |NULL|    |4   ||5   |    |6   |                                                                                     
+          +----+    +----++----+    +----+ 
+        */
+        if (root == null
+            || (movable
+                && (root.right == null
+                    || (rl = root.left) == null
+                    || rl.left == null))) {
+            // 链表化
+            tab[index] = first.untreeify(map);  // too small
+            return;
+        }
+        TreeNode<K,V> p = this; // 当前节点
+        TreeNode<K,V> pl = left; // 左子节点
+        TreeNode<K,V> pr = right;  // 右子节点
+        TreeNode<K,V> replacement;
+        // 如果左右子节点都不为n空
+        if (pl != null && pr != null) {
+
+            // 查找右子树的最左节点，即当前节点的后继节点
+            TreeNode<K,V> s = pr, sl;
+            while ((sl = s.left) != null) // find successor
+                s = sl;
+
+            // 与当前节点交换颜色
+            boolean c = s.red;
+            boolean s.red = p.red;
+            boolean p.red = c;
+
+            // 后继节点的右子树（后继节点肯定不存在左子树）
+            TreeNode<K,V> sr = s.right;
+            // 当前节点的父节点
+            TreeNode<K,V> pp = p.parent;
+
+            // 如果右子节点等于后继节点说明当前节点只有一个右子节点
+            if (s == pr) {
+                // 交换两个节点
+                p.parent = s;
+                s.right = p;
+            }
+            // 如果右节点不仅只有一个
+            else {
+                TreeNode<K,V> sp = s.parent; // 后继节点的父节点
+                // 将当前节点的父节点设置为后继节点的父节点
+                if ((p.parent = sp) != null) {
+                    // 如果后继节点是后继节点父节点的左子节点
+                    if (s == sp.left)
+                        sp.left = p; // 将后继节点的左节点设置为当前节点
+                    else
+                        sp.right = p;
+                }
+                if ((s.right = pr) != null)
+                    pr.parent = s;
+            }
+            p.left = null;
+            if ((p.right = sr) != null)
+                sr.parent = p;
+            if ((s.left = pl) != null)
+                pl.parent = s;
+            if ((s.parent = pp) == null)
+                root = s;
+            else if (p == pp.left)
+                pp.left = s;
             else
-                pred.next = succ;
-            if (succ != null)
-                succ.prev = pred;
-            if (first == null)
-                return;
-            if (root.parent != null)
-                root = root.root();
-            if (root == null
-                || (movable
-                    && (root.right == null
-                        || (rl = root.left) == null
-                        || rl.left == null))) {
-                tab[index] = first.untreeify(map);  // too small
-                return;
-            }
-            TreeNode<K,V> p = this, pl = left, pr = right, replacement;
-            if (pl != null && pr != null) {
-                TreeNode<K,V> s = pr, sl;
-                while ((sl = s.left) != null) // find successor
-                    s = sl;
-                boolean c = s.red; s.red = p.red; p.red = c; // swap colors
-                TreeNode<K,V> sr = s.right;
-                TreeNode<K,V> pp = p.parent;
-                if (s == pr) { // p was s's direct parent
-                    p.parent = s;
-                    s.right = p;
-                }
-                else {
-                    TreeNode<K,V> sp = s.parent;
-                    if ((p.parent = sp) != null) {
-                        if (s == sp.left)
-                            sp.left = p;
-                        else
-                            sp.right = p;
-                    }
-                    if ((s.right = pr) != null)
-                        pr.parent = s;
-                }
-                p.left = null;
-                if ((p.right = sr) != null)
-                    sr.parent = p;
-                if ((s.left = pl) != null)
-                    pl.parent = s;
-                if ((s.parent = pp) == null)
-                    root = s;
-                else if (p == pp.left)
-                    pp.left = s;
-                else
-                    pp.right = s;
-                if (sr != null)
-                    replacement = sr;
-                else
-                    replacement = p;
-            }
-            else if (pl != null)
-                replacement = pl;
-            else if (pr != null)
-                replacement = pr;
+                pp.right = s;
+            if (sr != null)
+                replacement = sr;
             else
                 replacement = p;
-            if (replacement != p) {
-                TreeNode<K,V> pp = replacement.parent = p.parent;
-                if (pp == null)
-                    root = replacement;
-                else if (p == pp.left)
-                    pp.left = replacement;
-                else
-                    pp.right = replacement;
-                p.left = p.right = p.parent = null;
-            }
-
-            TreeNode<K,V> r = p.red ? root : balanceDeletion(root, replacement);
-
-            if (replacement == p) {  // detach
-                TreeNode<K,V> pp = p.parent;
-                p.parent = null;
-                if (pp != null) {
-                    if (p == pp.left)
-                        pp.left = null;
-                    else if (p == pp.right)
-                        pp.right = null;
-                }
-            }
-            if (movable)
-                moveRootToFront(tab, r);
         }
+        else if (pl != null)
+            replacement = pl;
+        else if (pr != null)
+            replacement = pr;
+        else
+            replacement = p;
+        if (replacement != p) {
+            TreeNode<K,V> pp = replacement.parent = p.parent;
+            if (pp == null)
+                root = replacement;
+            else if (p == pp.left)
+                pp.left = replacement;
+            else
+                pp.right = replacement;
+            p.left = p.right = p.parent = null;
+        }
+
+        TreeNode<K,V> r = p.red ? root : balanceDeletion(root, replacement);
+
+        if (replacement == p) {  // detach
+            TreeNode<K,V> pp = p.parent;
+            p.parent = null;
+            if (pp != null) {
+                if (p == pp.left)
+                    pp.left = null;
+                else if (p == pp.right)
+                    pp.right = null;
+            }
+        }
+        if (movable)
+            moveRootToFront(tab, r);
+    }
 
         /**
          * Splits nodes in a tree bin into lower and upper tree bins,
